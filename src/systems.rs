@@ -4,6 +4,9 @@ use crate::{config, patterns::Pattern, state::GameState};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
+#[derive(Component)]
+pub struct SelectedPatternText;
+
 pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
     // Spawn the 2D camera
     commands.spawn(Camera2dBundle::default());
@@ -63,6 +66,25 @@ pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_se
             }
         }
     }
+    commands.spawn((
+        TextBundle::from_section(
+            format!("Selected Pattern: {:?}", game_state.selected_pattern),
+            TextStyle {
+                font: asset_server.load("fonts/FiraSans-Bold.ttf"), // Replace with the path to your font file
+                font_size: 24.0,
+                color: Color::WHITE,
+            },
+        )
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            width: Val::Px(200.0),
+            height: Val::Px(50.0),
+            right: Val::Px(10.0),
+            bottom: Val::Px(10.0),
+            ..Default::default()
+        }),
+        SelectedPatternText, // Marker component
+    ));
 }
 
 pub fn update_cells(mut game_state: ResMut<GameState>) {
@@ -187,13 +209,15 @@ pub fn trigger_selected_pattern(
 }
 
 pub fn change_selected_pattern(mut game_state: ResMut<GameState>, keys: Res<ButtonInput<KeyCode>>) {
-    if keys.just_pressed(KeyCode::ArrowUp) {
-        game_state.selected_pattern = Pattern::Single;
-    } else if keys.just_pressed(KeyCode::ArrowDown) {
-        game_state.selected_pattern = Pattern::Glider;
+    if keys.just_pressed(KeyCode::ArrowRight) {
+        game_state.selected_pattern = game_state.selected_pattern.next();
     } else if keys.just_pressed(KeyCode::ArrowLeft) {
-        game_state.selected_pattern = Pattern::Blinker;
-    } else if keys.just_pressed(KeyCode::ArrowRight) {
-        game_state.selected_pattern = Pattern::Toad;
+        game_state.selected_pattern = game_state.selected_pattern.previous();
+    }
+}
+
+pub fn update_text(game_state: Res<GameState>, mut query: Query<&mut Text, With<SelectedPatternText>>) {
+    if let Ok(mut text) = query.get_single_mut() {
+        text.sections[0].value = format!("Selected Pattern: {:?}", game_state.selected_pattern);
     }
 }

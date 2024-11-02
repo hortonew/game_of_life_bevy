@@ -1,7 +1,7 @@
 use crate::state::Cell;
 
 #[allow(dead_code)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Pattern {
     Single,
     Glider,
@@ -22,6 +22,32 @@ impl Pattern {
             Pattern::Beacon => add_beacon(cells, x, y),
             Pattern::Pulsar => add_pulsar(cells, x, y),
             Pattern::Block => add_block(cells, x, y),
+        }
+    }
+
+    pub fn next(&self) -> Pattern {
+        use Pattern::*;
+        match self {
+            Single => Glider,
+            Glider => Blinker,
+            Blinker => Toad,
+            Toad => Beacon,
+            Beacon => Pulsar,
+            Pulsar => Block,
+            Block => Single, // Wrap around to the first pattern
+        }
+    }
+
+    pub fn previous(&self) -> Pattern {
+        use Pattern::*;
+        match self {
+            Single => Block, // Wrap around to the last pattern
+            Glider => Single,
+            Blinker => Glider,
+            Toad => Blinker,
+            Beacon => Toad,
+            Pulsar => Beacon,
+            Block => Pulsar,
         }
     }
 }

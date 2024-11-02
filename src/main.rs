@@ -11,7 +11,9 @@ use args::Args;
 use config::Mode;
 use rand::Rng;
 use state::GameState;
-use systems::{change_selected_pattern, render_cells, render_images, setup, trigger_selected_pattern, update_cells};
+use systems::{
+    change_selected_pattern, render_cells, render_images, setup, trigger_selected_pattern, update_cells, update_text,
+};
 
 fn main() {
     let args = Args::parse();
@@ -30,7 +32,7 @@ fn main() {
         })
         .add_systems(Startup, setup)
         .add_systems(FixedUpdate, (render_cells, render_images, update_cells))
-        .add_systems(Update, (trigger_selected_pattern, change_selected_pattern))
+        .add_systems(Update, (trigger_selected_pattern, change_selected_pattern, update_text))
         .insert_resource(Time::<Fixed>::from_seconds(tick_duration))
         .run();
 }
