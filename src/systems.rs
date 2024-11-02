@@ -2,29 +2,57 @@ use crate::state::Cell;
 use crate::{config, patterns::Pattern, state::GameState};
 use bevy::prelude::*;
 
-pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>) {
+pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
+    // Spawn the 2D camera
     commands.spawn(Camera2dBundle::default());
 
+    // Load textures for alive and dead cells
+    let textures = Textures {
+        alive_texture: asset_server.load(config::ALIVE_IMAGE),
+        dead_texture: asset_server.load(config::DEAD_IMAGE),
+    };
+    commands.insert_resource(textures.clone());
+
+    // Initialize the grid pattern
     let patterns = vec![(Pattern::Pulsar, 10, 30)];
     for (pattern, x, y) in patterns {
         pattern.add_to_grid(&mut game_state.cells, x, y);
     }
 
+    // Spawn a grid of sprites, either using color or texture mode based on the config
     for y in 0..crate::config::GRID_HEIGHT {
         for x in 0..crate::config::GRID_WIDTH {
-            commands.spawn(SpriteBundle {
-                sprite: Sprite {
-                    color: crate::config::DEAD_COLOR,
-                    custom_size: Some(Vec2::splat(config::CELL_SIZE)),
+            if config::USE_COLOR_MODE {
+                // Color mode: spawn with color
+                commands.spawn(SpriteBundle {
+                    sprite: Sprite {
+                        color: config::DEAD_COLOR,
+                        custom_size: Some(Vec2::splat(config::CELL_SIZE)),
+                        ..Default::default()
+                    },
+                    transform: Transform::from_xyz(
+                        x as f32 * config::CELL_SIZE - config::GRID_WIDTH as f32 * config::CELL_SIZE / 2.0,
+                        y as f32 * config::CELL_SIZE - config::GRID_HEIGHT as f32 * config::CELL_SIZE / 2.0,
+                        0.0,
+                    ),
                     ..Default::default()
-                },
-                transform: Transform::from_xyz(
-                    x as f32 * config::CELL_SIZE - config::GRID_WIDTH as f32 * config::CELL_SIZE / 2.0,
-                    y as f32 * config::CELL_SIZE - config::GRID_HEIGHT as f32 * config::CELL_SIZE / 2.0,
-                    0.0,
-                ),
-                ..Default::default()
-            });
+                });
+            } else {
+                // Image mode: spawn with texture
+                commands.spawn(SpriteBundle {
+                    texture: textures.dead_texture.clone(),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::splat(config::CELL_SIZE)), // Limit sprite to cell size
+                        ..Default::default()
+                    },
+                    transform: Transform::from_xyz(
+                        x as f32 * config::CELL_SIZE - config::GRID_WIDTH as f32 * config::CELL_SIZE / 2.0,
+                        y as f32 * config::CELL_SIZE - config::GRID_HEIGHT as f32 * config::CELL_SIZE / 2.0,
+                        0.0,
+                    ),
+                    ..Default::default()
+                });
+            }
         }
     }
 }
@@ -66,14 +94,16 @@ pub fn update_cells(mut game_state: ResMut<GameState>) {
 }
 
 pub fn render_cells(game_state: Res<GameState>, mut query: Query<&mut Sprite>) {
-    for (i, mut sprite) in query.iter_mut().enumerate() {
-        let x = i % config::GRID_WIDTH;
-        let y = i / config::GRID_WIDTH;
-        sprite.color = if game_state.cells[y][x].is_alive {
-            config::ALIVE_COLOR
-        } else {
-            config::DEAD_COLOR
-        };
+    if config::USE_COLOR_MODE {
+        for (i, mut sprite) in query.iter_mut().enumerate() {
+            let x = i % config::GRID_WIDTH;
+            let y = i / config::GRID_WIDTH;
+            sprite.color = if game_state.cells[y][x].is_alive {
+                config::ALIVE_COLOR
+            } else {
+                config::DEAD_COLOR
+            };
+        }
     }
 }
 
@@ -92,4 +122,26 @@ fn count_alive_neighbors(cells: &[Vec<Cell>], x: usize, y: usize) -> usize {
         }
     }
     count
+}
+
+#[derive(Resource, Clone)]
+pub struct Textures {
+    alive_texture: Handle<Image>,
+    dead_texture: Handle<Image>,
+}
+
+pub fn render_images(game_state: Res<GameState>, textures: Res<Textures>, mut query: Query<&mut Handle<Image>>) {
+    if !config::USE_COLOR_MODE {
+        for (i, mut texture_handle) in query.iter_mut().enumerate() {
+            let x = i % config::GRID_WIDTH;
+            let y = i / config::GRID_WIDTH;
+
+            // Set the texture based on the cell state
+            *texture_handle = if game_state.cells[y][x].is_alive {
+                textures.alive_texture.clone()
+            } else {
+                textures.dead_texture.clone()
+            };
+        }
+    }
 }

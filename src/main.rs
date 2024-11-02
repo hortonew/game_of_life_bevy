@@ -10,7 +10,7 @@ mod systems;
 use args::Args;
 use rand::Rng;
 use state::GameState;
-use systems::{render_cells, setup, update_cells};
+use systems::{render_cells, render_images, setup, update_cells};
 
 fn main() {
     let args = Args::parse();
@@ -25,7 +25,7 @@ fn main() {
             rules,
         })
         .add_systems(Startup, setup)
-        .add_systems(FixedUpdate, (render_cells, update_cells))
+        .add_systems(FixedUpdate, (render_cells, render_images, update_cells))
         .insert_resource(Time::<Fixed>::from_seconds(tick_duration))
         .run();
 }
