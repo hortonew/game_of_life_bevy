@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 use rand::Rng;
-
-const GRID_WIDTH: usize = 50; // Width of the grid
-const GRID_HEIGHT: usize = 50; // Height of the grid
-const CELL_SIZE: f32 = 10.0; // Size of each cell in pixels
+const GRID_WIDTH: usize = 50;
+const GRID_HEIGHT: usize = 50;
+const CELL_SIZE: f32 = 10.0;
 const ALIVE_COLOR: Color = Color::srgb(0.0, 1.0, 0.0); // Green for alive cells
 const DEAD_COLOR: Color = Color::srgb(0.0, 0.0, 0.0); // Black for dead cells
 
@@ -15,15 +14,25 @@ struct GameState {
 }
 
 fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins)
         .insert_resource(GameState {
             cells: generate_random_grid(),
             next_cells: vec![vec![false; GRID_WIDTH]; GRID_HEIGHT],
         })
-        .add_systems(Startup, setup) // Use add_systems(Startup, ...) for setup systems
-        .add_systems(Update, (update_cells, render_cells)) // Use add_systems(Update, ...) for update systems
-        .run();
+        .add_systems(Startup, setup)
+        .add_systems(FixedUpdate, (render_cells, update_cells))
+        .insert_resource(Time::<Fixed>::from_seconds(1.0 / 30.0));
+
+    #[cfg(debug_assertions)] // debug/dev builds only
+    {
+        use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
+        use bevy::diagnostic::LogDiagnosticsPlugin;
+        app.add_plugins(LogDiagnosticsPlugin::default());
+        app.add_plugins(FrameTimeDiagnosticsPlugin);
+    }
+
+    app.run();
 }
 
 // Generate a random initial grid state
@@ -86,11 +95,12 @@ fn update_cells(mut game_state: ResMut<GameState>) {
 }
 
 // Count the alive neighbors of a cell at (x, y)
-fn count_alive_neighbors(cells: &Vec<Vec<bool>>, x: usize, y: usize) -> usize {
+fn count_alive_neighbors(cells: &[Vec<bool>], x: usize, y: usize) -> usize {
     let mut count = 0;
     for dy in -1..=1 {
         for dx in -1..=1 {
             if dx == 0 && dy == 0 {
+                // this is the cell itself
                 continue;
             }
             let nx = (x as isize + dx).rem_euclid(GRID_WIDTH as isize) as usize;
