@@ -8,6 +8,7 @@ mod state;
 mod systems;
 
 use args::Args;
+use config::Mode;
 use rand::Rng;
 use state::GameState;
 use systems::{render_cells, render_images, setup, update_cells};
@@ -15,6 +16,7 @@ use systems::{render_cells, render_images, setup, update_cells};
 fn main() {
     let args = Args::parse();
     let rules = args.rules.to_rules();
+    let mode = Mode::from(args.mode);
     let tick_duration = if args.speed != 1.0 { 1.0 / args.speed } else { 1.0 };
 
     App::new()
@@ -23,6 +25,7 @@ fn main() {
             cells: generate_empty_grid(),
             next_cells: vec![vec![false; config::GRID_WIDTH]; config::GRID_HEIGHT],
             rules,
+            mode,
         })
         .add_systems(Startup, setup)
         .add_systems(FixedUpdate, (render_cells, render_images, update_cells))

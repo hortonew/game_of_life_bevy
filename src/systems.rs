@@ -1,3 +1,4 @@
+use crate::config::Mode;
 use crate::state::Cell;
 use crate::{config, patterns::Pattern, state::GameState};
 use bevy::prelude::*;
@@ -22,7 +23,7 @@ pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_se
     // Spawn a grid of sprites, either using color or texture mode based on the config
     for y in 0..crate::config::GRID_HEIGHT {
         for x in 0..crate::config::GRID_WIDTH {
-            if config::USE_COLOR_MODE {
+            if game_state.mode == Mode::Color {
                 // Color mode: spawn with color
                 commands.spawn(SpriteBundle {
                     sprite: Sprite {
@@ -94,7 +95,7 @@ pub fn update_cells(mut game_state: ResMut<GameState>) {
 }
 
 pub fn render_cells(game_state: Res<GameState>, mut query: Query<&mut Sprite>) {
-    if config::USE_COLOR_MODE {
+    if game_state.mode == Mode::Color {
         for (i, mut sprite) in query.iter_mut().enumerate() {
             let x = i % config::GRID_WIDTH;
             let y = i / config::GRID_WIDTH;
@@ -131,7 +132,7 @@ pub struct Textures {
 }
 
 pub fn render_images(game_state: Res<GameState>, textures: Res<Textures>, mut query: Query<&mut Handle<Image>>) {
-    if !config::USE_COLOR_MODE {
+    if game_state.mode == Mode::Image {
         for (i, mut texture_handle) in query.iter_mut().enumerate() {
             let x = i % config::GRID_WIDTH;
             let y = i / config::GRID_WIDTH;

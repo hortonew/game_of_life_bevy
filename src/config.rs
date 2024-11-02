@@ -8,4 +8,9 @@ pub const DEAD_COLOR: Color = Color::srgb(0.0, 0.0, 0.0); // Black for dead cell
 
 pub const ALIVE_IMAGE: &str = "frog.png";
 pub const DEAD_IMAGE: &str = "empty.png";
-pub const USE_COLOR_MODE: bool = false; // Set to `false` for image mode, `true` for color mode
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum Mode {
+    Color,
+    Image,
+}
