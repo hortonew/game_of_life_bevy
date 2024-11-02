@@ -1,6 +1,7 @@
 use crate::state::Cell;
 
 #[allow(dead_code)]
+#[derive(Clone, Copy)]
 pub enum Pattern {
     Single,
     Glider,

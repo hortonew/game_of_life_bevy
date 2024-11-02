@@ -2,6 +2,7 @@ use crate::config::Mode;
 use crate::state::Cell;
 use crate::{config, patterns::Pattern, state::GameState};
 use bevy::prelude::*;
+use bevy::window::PrimaryWindow;
 
 pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
     // Spawn the 2D camera
@@ -150,5 +151,49 @@ pub fn render_images(game_state: Res<GameState>, textures: Res<Textures>, mut qu
                 textures.dead_texture.clone()
             };
         }
+    }
+}
+
+pub fn trigger_selected_pattern(
+    mut game_state: ResMut<GameState>,
+    buttons: Res<ButtonInput<MouseButton>>,
+    q_windows: Query<&Window, With<PrimaryWindow>>,
+) {
+    if buttons.just_pressed(MouseButton::Left) {
+        if let Ok(window) = q_windows.get_single() {
+            if let Some(cursor_pos) = window.cursor_position() {
+                // Calculate the grid offset to position the grid center at the window center
+                let grid_offset_x = (config::GRID_WIDTH as f32 * config::CELL_SIZE) / 2.0;
+                let grid_offset_y = (config::GRID_HEIGHT as f32 * config::CELL_SIZE) / 2.0;
+
+                // Adjust cursor position relative to the grid center
+                let adjusted_x = cursor_pos.x - window.width() / 2.0 + grid_offset_x;
+                let adjusted_y = (window.height() - cursor_pos.y) - window.height() / 2.0 + grid_offset_y;
+
+                // Convert to grid coordinates
+                let grid_x = (adjusted_x / config::CELL_SIZE) as isize;
+                let grid_y = (adjusted_y / config::CELL_SIZE) as isize;
+
+                // Clamp grid coordinates to be within bounds
+                let grid_x = grid_x.clamp(0, config::GRID_WIDTH as isize - 1);
+                let grid_y = grid_y.clamp(0, config::GRID_HEIGHT as isize - 1);
+
+                // Add the blinker pattern at the clamped grid position
+                let selected_pattern = game_state.selected_pattern;
+                selected_pattern.add_to_grid(&mut game_state.cells, grid_x as usize, grid_y as usize);
+            }
+        }
+    }
+}
+
+pub fn change_selected_pattern(mut game_state: ResMut<GameState>, keys: Res<ButtonInput<KeyCode>>) {
+    if keys.just_pressed(KeyCode::ArrowUp) {
+        game_state.selected_pattern = Pattern::Single;
+    } else if keys.just_pressed(KeyCode::ArrowDown) {
+        game_state.selected_pattern = Pattern::Glider;
+    } else if keys.just_pressed(KeyCode::ArrowLeft) {
+        game_state.selected_pattern = Pattern::Blinker;
+    } else if keys.just_pressed(KeyCode::ArrowRight) {
+        game_state.selected_pattern = Pattern::Toad;
     }
 }
