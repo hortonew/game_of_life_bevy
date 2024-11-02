@@ -7,10 +7,25 @@ const CELL_SIZE: f32 = 10.0;
 const ALIVE_COLOR: Color = Color::srgb(0.0, 1.0, 0.0); // Green for alive cells
 const DEAD_COLOR: Color = Color::srgb(0.0, 0.0, 0.0); // Black for dead cells
 
+struct Rules {
+    survival_counts: Vec<usize>, // Counts of neighbors needed to survive
+    birth_counts: Vec<usize>,    // Counts of neighbors needed to be born
+}
+
+impl Rules {
+    fn conway() -> Self {
+        Self {
+            survival_counts: vec![2, 3],
+            birth_counts: vec![3],
+        }
+    }
+}
+
 #[derive(Resource)]
 struct GameState {
     cells: Vec<Vec<Cell>>,      // 2D grid of cells with metadata
     next_cells: Vec<Vec<bool>>, // Temporary grid for next state calculations
+    rules: Rules,
 }
 
 #[derive(Clone)]
@@ -23,8 +38,10 @@ fn main() {
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .insert_resource(GameState {
-            cells: generate_random_grid(),
+            // cells: generate_random_grid(),
+            cells: generate_empty_grid(),
             next_cells: vec![vec![false; GRID_WIDTH]; GRID_HEIGHT],
+            rules: Rules::conway(),
         })
         .add_systems(Startup, setup)
         .add_systems(FixedUpdate, (render_cells, update_cells))
@@ -42,6 +59,7 @@ fn main() {
 }
 
 // Generate a random initial grid state
+#[allow(dead_code)]
 fn generate_random_grid() -> Vec<Vec<Cell>> {
     let mut rng = rand::thread_rng();
     (0..GRID_HEIGHT)
@@ -56,9 +74,36 @@ fn generate_random_grid() -> Vec<Vec<Cell>> {
         .collect()
 }
 
+#[allow(dead_code)]
+fn generate_empty_grid() -> Vec<Vec<Cell>> {
+    (0..GRID_HEIGHT)
+        .map(|_| {
+            (0..GRID_WIDTH)
+                .map(|_| Cell {
+                    is_alive: false,
+                    activation_count: 0,
+                })
+                .collect()
+        })
+        .collect()
+}
+
 // Setup function to initialize the camera and create cell entities
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, mut game_state: ResMut<GameState>) {
     commands.spawn(Camera2dBundle::default());
+
+    // Add a glider and a blinker to the initial grid
+    let patterns = vec![
+        // (Pattern::Glider, 5, 5),
+        // (Pattern::Blinker, 20, 20),
+        // (Pattern::Toad, 15, 15),
+        // (Pattern::Beacon, 30, 10),
+        (Pattern::Pulsar, 10, 30),
+        // (Pattern::Block, 35, 35),
+    ];
+    for (pattern, x, y) in patterns {
+        pattern.add_to_grid(&mut game_state.cells, x, y);
+    }
 
     for y in 0..GRID_HEIGHT {
         for x in 0..GRID_WIDTH {
@@ -81,30 +126,35 @@ fn setup(mut commands: Commands) {
 
 // Update cells according to Game of Life rules
 fn update_cells(mut game_state: ResMut<GameState>) {
+    let rules = &game_state.rules;
+
+    // Temporary storage for the next state to avoid mutable borrowing conflicts
+    let mut new_next_cells = vec![vec![false; GRID_WIDTH]; GRID_HEIGHT];
+
     // First pass: determine the next state for each cell
     for y in 0..GRID_HEIGHT {
         for x in 0..GRID_WIDTH {
             let alive_neighbors = count_alive_neighbors(&game_state.cells, x, y);
             let is_alive = game_state.cells[y][x].is_alive;
 
-            game_state.next_cells[y][x] = match (is_alive, alive_neighbors) {
-                (true, 2) | (true, 3) => true,
-                (false, 3) => true,
-                _ => false,
+            new_next_cells[y][x] = if is_alive {
+                rules.survival_counts.contains(&alive_neighbors)
+            } else {
+                rules.birth_counts.contains(&alive_neighbors)
             };
         }
     }
 
-    // Second pass: apply the next state and update activation counts
+    // Second pass: update game_state.next_cells with the calculated next state
+    game_state.next_cells = new_next_cells;
+
+    // Third pass: apply the next state and update activation counts
     for y in 0..GRID_HEIGHT {
         for x in 0..GRID_WIDTH {
-            let next_alive = game_state.next_cells[y][x]; // Store the next state in a temporary variable
+            let next_alive = game_state.next_cells[y][x];
             let cell = &mut game_state.cells[y][x];
             if next_alive && !cell.is_alive {
                 cell.activation_count += 1; // Increment count if cell becomes alive
-                                            // if cell.activation_count % 5 == 0 {
-                                            //     println!("Cell at ({}, {}) has been alive {} times", x, y, cell.activation_count);
-                                            // }
             }
             cell.is_alive = next_alive;
         }
@@ -139,5 +189,120 @@ fn render_cells(game_state: Res<GameState>, mut query: Query<&mut Sprite>) {
         } else {
             DEAD_COLOR
         };
+    }
+}
+
+enum Pattern {
+    Glider,
+    Blinker,
+    Toad,
+    Beacon,
+    Pulsar,
+    Block,
+}
+
+impl Pattern {
+    fn add_to_grid(&self, cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+        match self {
+            Pattern::Glider => add_glider(cells, x, y),
+            Pattern::Blinker => add_blinker(cells, x, y),
+            Pattern::Toad => add_toad(cells, x, y),
+            Pattern::Beacon => add_beacon(cells, x, y),
+            Pattern::Pulsar => add_pulsar(cells, x, y),
+            Pattern::Block => add_block(cells, x, y),
+        }
+    }
+}
+
+fn add_glider(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+    // Coordinates for a glider pattern
+    let glider_coords = [(0, 1), (1, 2), (2, 0), (2, 1), (2, 2)];
+    for (dx, dy) in glider_coords {
+        cells[y + dy][x + dx].is_alive = true;
+    }
+}
+
+fn add_blinker(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+    // Coordinates for a blinker pattern
+    let blinker_coords = [(0, 1), (1, 1), (2, 1)];
+    for (dx, dy) in blinker_coords {
+        cells[y + dy][x + dx].is_alive = true;
+    }
+}
+
+fn add_toad(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+    let toad_coords = [(1, 0), (2, 0), (3, 0), (0, 1), (1, 1), (2, 1)];
+    for (dx, dy) in toad_coords {
+        cells[y + dy][x + dx].is_alive = true;
+    }
+}
+
+fn add_beacon(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+    let beacon_coords = [(0, 0), (1, 0), (0, 1), (1, 1), (2, 2), (3, 2), (2, 3), (3, 3)];
+    for (dx, dy) in beacon_coords {
+        cells[y + dy][x + dx].is_alive = true;
+    }
+}
+
+fn add_pulsar(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+    let pulsar_coords = [
+        (2, 0),
+        (3, 0),
+        (4, 0),
+        (8, 0),
+        (9, 0),
+        (10, 0),
+        (0, 2),
+        (5, 2),
+        (7, 2),
+        (12, 2),
+        (0, 3),
+        (5, 3),
+        (7, 3),
+        (12, 3),
+        (0, 4),
+        (5, 4),
+        (7, 4),
+        (12, 4),
+        (2, 5),
+        (3, 5),
+        (4, 5),
+        (8, 5),
+        (9, 5),
+        (10, 5),
+        (2, 7),
+        (3, 7),
+        (4, 7),
+        (8, 7),
+        (9, 7),
+        (10, 7),
+        (0, 8),
+        (5, 8),
+        (7, 8),
+        (12, 8),
+        (0, 9),
+        (5, 9),
+        (7, 9),
+        (12, 9),
+        (0, 10),
+        (5, 10),
+        (7, 10),
+        (12, 10),
+        (2, 12),
+        (3, 12),
+        (4, 12),
+        (8, 12),
+        (9, 12),
+        (10, 12),
+    ];
+    for (dx, dy) in pulsar_coords {
+        cells[y + dy][x + dx].is_alive = true;
+    }
+}
+
+fn add_block(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+    let block_coords = [(0, 0), (1, 0), (0, 1), (1, 1)];
+    for (dx, dy) in block_coords {
+        cells[y + dy][x + dx].is_alive = true;
     }
 }
