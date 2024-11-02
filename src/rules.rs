@@ -14,6 +14,12 @@ pub enum RuleSet {
     LifeWithoutDeath,
     Maze,
     Anneal,
+    Diamoeba,
+    TwoByTwo,
+    Morley,
+    Replicator,
+    Fredkin,
+    Stains,
 }
 
 impl RuleSet {
@@ -26,6 +32,12 @@ impl RuleSet {
             RuleSet::LifeWithoutDeath => Rules::life_without_death(),
             RuleSet::Maze => Rules::maze(),
             RuleSet::Anneal => Rules::anneal(),
+            RuleSet::Diamoeba => Rules::diamoeba(),
+            RuleSet::TwoByTwo => Rules::two_by_two(),
+            RuleSet::Morley => Rules::morley(),
+            RuleSet::Replicator => Rules::replicator(),
+            RuleSet::Fredkin => Rules::fredkin(),
+            RuleSet::Stains => Rules::stains(),
         }
     }
 
@@ -38,19 +50,32 @@ impl RuleSet {
             Seeds => LifeWithoutDeath,
             LifeWithoutDeath => Maze,
             Maze => Anneal,
-            Anneal => Conway,
+            Anneal => Diamoeba,
+            Diamoeba => TwoByTwo,
+            TwoByTwo => Morley,
+            Morley => Replicator,
+            Replicator => Fredkin,
+            Fredkin => Stains,
+            Stains => Conway, // Wrap around to the first pattern
         }
     }
+
     pub fn previous(&self) -> RuleSet {
         use RuleSet::*;
         match self {
-            Conway => Anneal,
+            Conway => Stains, // Wrap around to the last pattern
             Highlife => Conway,
             DayAndNight => Highlife,
             Seeds => DayAndNight,
             LifeWithoutDeath => Seeds,
             Maze => LifeWithoutDeath,
             Anneal => Maze,
+            Diamoeba => Anneal,
+            TwoByTwo => Diamoeba,
+            Morley => TwoByTwo,
+            Replicator => Morley,
+            Fredkin => Replicator,
+            Stains => Fredkin,
         }
     }
 }
@@ -103,6 +128,43 @@ impl Rules {
         Self {
             survival_counts: vec![4, 6, 7, 8],
             birth_counts: vec![3, 5, 6, 7, 8],
+        }
+    }
+    fn diamoeba() -> Self {
+        Self {
+            survival_counts: vec![5, 6, 7, 8],
+            birth_counts: vec![3, 5, 6, 7, 8],
+        }
+    }
+    fn two_by_two() -> Self {
+        Self {
+            survival_counts: vec![1, 2, 5],
+            birth_counts: vec![3, 6],
+        }
+    }
+
+    fn morley() -> Self {
+        Self {
+            survival_counts: vec![2, 4, 5],
+            birth_counts: vec![3, 6, 8],
+        }
+    }
+    fn replicator() -> Self {
+        Self {
+            survival_counts: vec![1, 3, 5, 7],
+            birth_counts: vec![1, 3, 5, 7],
+        }
+    }
+    fn fredkin() -> Self {
+        Self {
+            survival_counts: vec![0, 2, 4, 6, 8],
+            birth_counts: vec![1, 3, 5, 7],
+        }
+    }
+    fn stains() -> Self {
+        Self {
+            survival_counts: vec![2, 3, 5, 6],
+            birth_counts: vec![3, 6, 7, 8],
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{config::Mode, patterns::Pattern, rules::RuleSet, rules::Rules};
+use crate::{config::Mode, patterns::Pattern, rules::RuleSet};
 use bevy::prelude::*;
 #[derive(Resource)]
 pub struct GameState {
