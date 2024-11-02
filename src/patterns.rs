@@ -2,6 +2,7 @@ use crate::state::Cell;
 
 #[allow(dead_code)]
 pub enum Pattern {
+    Single,
     Glider,
     Blinker,
     Toad,
@@ -13,6 +14,7 @@ pub enum Pattern {
 impl Pattern {
     pub fn add_to_grid(&self, cells: &mut [Vec<Cell>], x: usize, y: usize) {
         match self {
+            Pattern::Single => add_single(cells, x, y),
             Pattern::Glider => add_glider(cells, x, y),
             Pattern::Blinker => add_blinker(cells, x, y),
             Pattern::Toad => add_toad(cells, x, y),
@@ -21,6 +23,10 @@ impl Pattern {
             Pattern::Block => add_block(cells, x, y),
         }
     }
+}
+
+fn add_single(cells: &mut [Vec<Cell>], x: usize, y: usize) {
+    cells[y][x].is_alive = true;
 }
 
 fn add_glider(cells: &mut [Vec<Cell>], x: usize, y: usize) {

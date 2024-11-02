@@ -15,7 +15,13 @@ pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_se
     commands.insert_resource(textures.clone());
 
     // Initialize the grid pattern
-    let patterns = vec![(Pattern::Pulsar, 10, 30)];
+    let patterns = vec![
+        (Pattern::Single, 1, 3),
+        (Pattern::Single, 1, 4),
+        (Pattern::Single, 1, 5),
+        (Pattern::Single, 2, 3),
+        (Pattern::Pulsar, 10, 30),
+    ];
     for (pattern, x, y) in patterns {
         pattern.add_to_grid(&mut game_state.cells, x, y);
     }
