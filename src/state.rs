@@ -1,12 +1,12 @@
-use crate::{config::Mode, patterns::Pattern, rules::Rules};
+use crate::{config::Mode, patterns::Pattern, rules::RuleSet, rules::Rules};
 use bevy::prelude::*;
 #[derive(Resource)]
 pub struct GameState {
     pub cells: Vec<Vec<Cell>>,
     pub next_cells: Vec<Vec<bool>>,
-    pub rules: Rules,
     pub mode: Mode,
     pub selected_pattern: Pattern,
+    pub selected_rules: RuleSet,
 }
 
 #[derive(Clone)]
@@ -17,6 +17,9 @@ pub struct Cell {
 
 #[derive(Component)]
 pub struct SelectedPatternText;
+
+#[derive(Component)]
+pub struct SelectedRulesText;
 
 #[derive(Resource, Clone)]
 pub struct Textures {

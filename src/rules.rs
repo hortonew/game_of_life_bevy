@@ -5,7 +5,7 @@ pub struct Rules {
     pub birth_counts: Vec<usize>,
 }
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum RuleSet {
     Conway,
     Highlife,
@@ -26,6 +26,31 @@ impl RuleSet {
             RuleSet::LifeWithoutDeath => Rules::life_without_death(),
             RuleSet::Maze => Rules::maze(),
             RuleSet::Anneal => Rules::anneal(),
+        }
+    }
+
+    pub fn next(&self) -> RuleSet {
+        use RuleSet::*;
+        match self {
+            Conway => Highlife,
+            Highlife => DayAndNight,
+            DayAndNight => Seeds,
+            Seeds => LifeWithoutDeath,
+            LifeWithoutDeath => Maze,
+            Maze => Anneal,
+            Anneal => Conway,
+        }
+    }
+    pub fn previous(&self) -> RuleSet {
+        use RuleSet::*;
+        match self {
+            Conway => Anneal,
+            Highlife => Conway,
+            DayAndNight => Highlife,
+            Seeds => DayAndNight,
+            LifeWithoutDeath => Seeds,
+            Maze => LifeWithoutDeath,
+            Anneal => Maze,
         }
     }
 }

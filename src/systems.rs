@@ -1,5 +1,5 @@
 use crate::config::Mode;
-use crate::state::{Cell, SelectedPatternText, Textures};
+use crate::state::{Cell, SelectedPatternText, SelectedRulesText, Textures};
 use crate::{config, state::GameState};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
@@ -70,10 +70,30 @@ pub fn setup(mut commands: Commands, game_state: ResMut<GameState>, asset_server
         }),
         SelectedPatternText, // Marker component
     ));
+
+    commands.spawn((
+        TextBundle::from_section(
+            format!("Rules: {:?}", game_state.selected_rules),
+            TextStyle {
+                font: asset_server.load(config::FONT),
+                font_size: 24.0,
+                color: Color::WHITE,
+            },
+        )
+        .with_style(Style {
+            position_type: PositionType::Absolute,
+            width: Val::Px(200.0),
+            height: Val::Px(50.0),
+            right: Val::Px(10.0),
+            bottom: Val::Px(100.0),
+            ..Default::default()
+        }),
+        SelectedRulesText, // Marker component
+    ));
 }
 
 pub fn update_cells(mut game_state: ResMut<GameState>) {
-    let rules = &game_state.rules;
+    let rules = &game_state.selected_rules.to_rules();
 
     // Temporary storage for the next state to avoid mutable borrowing conflicts
     let mut new_next_cells = vec![vec![false; config::GRID_WIDTH]; config::GRID_HEIGHT];
@@ -195,9 +215,26 @@ pub fn change_selected_pattern(mut game_state: ResMut<GameState>, keys: Res<Butt
     }
 }
 
-pub fn update_text(game_state: Res<GameState>, mut query: Query<&mut Text, With<SelectedPatternText>>) {
-    if let Ok(mut text) = query.get_single_mut() {
+pub fn change_selected_rules(mut game_state: ResMut<GameState>, keys: Res<ButtonInput<KeyCode>>) {
+    if keys.just_pressed(KeyCode::ArrowUp) || keys.just_pressed(KeyCode::KeyW) {
+        game_state.selected_rules = game_state.selected_rules.next();
+    } else if keys.just_pressed(KeyCode::ArrowDown) || keys.just_pressed(KeyCode::KeyS) {
+        game_state.selected_rules = game_state.selected_rules.previous();
+    }
+}
+
+pub fn update_text(
+    game_state: Res<GameState>,
+    mut param_set: ParamSet<(
+        Query<&mut Text, With<SelectedPatternText>>,
+        Query<&mut Text, With<SelectedRulesText>>,
+    )>,
+) {
+    if let Ok(mut text) = param_set.p0().get_single_mut() {
         text.sections[0].value = format!("Selected Pattern: {:?}", game_state.selected_pattern);
+    }
+    if let Ok(mut text) = param_set.p1().get_single_mut() {
+        text.sections[0].value = format!("Rules: {:?}", game_state.selected_rules);
     }
 }
 
