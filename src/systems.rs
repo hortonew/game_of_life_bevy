@@ -1,11 +1,8 @@
 use crate::config::Mode;
-use crate::state::Cell;
+use crate::state::{Cell, SelectedPatternText, Textures};
 use crate::{config, state::GameState};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
-
-#[derive(Component)]
-pub struct SelectedPatternText;
 
 pub fn setup(mut commands: Commands, game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
     // Spawn the 2D camera
@@ -140,12 +137,6 @@ fn count_alive_neighbors(cells: &[Vec<Cell>], x: usize, y: usize) -> usize {
         }
     }
     count
-}
-
-#[derive(Resource, Clone)]
-pub struct Textures {
-    alive_texture: Handle<Image>,
-    dead_texture: Handle<Image>,
 }
 
 pub fn render_images(game_state: Res<GameState>, textures: Res<Textures>, mut query: Query<&mut Handle<Image>>) {
