@@ -1,13 +1,13 @@
 use crate::config::Mode;
 use crate::state::Cell;
-use crate::{config, patterns::Pattern, state::GameState};
+use crate::{config, state::GameState};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 
 #[derive(Component)]
 pub struct SelectedPatternText;
 
-pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
+pub fn setup(mut commands: Commands, game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
     // Spawn the 2D camera
     commands.spawn(Camera2dBundle::default());
 
@@ -17,18 +17,6 @@ pub fn setup(mut commands: Commands, mut game_state: ResMut<GameState>, asset_se
         dead_texture: asset_server.load(config::DEAD_IMAGE),
     };
     commands.insert_resource(textures.clone());
-
-    // Initialize the grid pattern
-    let patterns = vec![
-        (Pattern::Single, 1, 3),
-        (Pattern::Single, 1, 4),
-        (Pattern::Single, 1, 5),
-        (Pattern::Single, 2, 3),
-        (Pattern::Pulsar, 10, 30),
-    ];
-    for (pattern, x, y) in patterns {
-        pattern.add_to_grid(&mut game_state.cells, x, y);
-    }
 
     // Spawn a grid of sprites, either using color or texture mode based on the config
     for y in 0..crate::config::GRID_HEIGHT {
@@ -209,9 +197,9 @@ pub fn trigger_selected_pattern(
 }
 
 pub fn change_selected_pattern(mut game_state: ResMut<GameState>, keys: Res<ButtonInput<KeyCode>>) {
-    if keys.just_pressed(KeyCode::ArrowRight) {
+    if keys.just_pressed(KeyCode::ArrowRight) || keys.just_pressed(KeyCode::KeyD) {
         game_state.selected_pattern = game_state.selected_pattern.next();
-    } else if keys.just_pressed(KeyCode::ArrowLeft) {
+    } else if keys.just_pressed(KeyCode::ArrowLeft) || keys.just_pressed(KeyCode::KeyA) {
         game_state.selected_pattern = game_state.selected_pattern.previous();
     }
 }
@@ -219,5 +207,15 @@ pub fn change_selected_pattern(mut game_state: ResMut<GameState>, keys: Res<Butt
 pub fn update_text(game_state: Res<GameState>, mut query: Query<&mut Text, With<SelectedPatternText>>) {
     if let Ok(mut text) = query.get_single_mut() {
         text.sections[0].value = format!("Selected Pattern: {:?}", game_state.selected_pattern);
+    }
+}
+
+pub fn kill_all_cells(mut game_state: ResMut<GameState>, keys: Res<ButtonInput<KeyCode>>) {
+    if keys.just_pressed(KeyCode::Escape) {
+        for y in 0..config::GRID_HEIGHT {
+            for x in 0..config::GRID_WIDTH {
+                game_state.cells[y][x].is_alive = false;
+            }
+        }
     }
 }
