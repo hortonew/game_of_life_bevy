@@ -6,8 +6,8 @@ mod patterns;
 mod rules;
 mod state;
 mod systems;
-
 use args::Args;
+use bevy_embedded_assets::EmbeddedAssetPlugin;
 use config::Mode;
 use rand::Rng;
 use state::GameState;
@@ -23,7 +23,7 @@ fn main() {
     let tick_duration = if args.speed != 1.0 { 1.0 / args.speed } else { 1.0 };
 
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins((EmbeddedAssetPlugin::default(), DefaultPlugins))
         .insert_resource(GameState {
             cells: generate_empty_grid(),
             next_cells: vec![vec![false; config::GRID_WIDTH]; config::GRID_HEIGHT],

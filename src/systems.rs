@@ -58,7 +58,7 @@ pub fn setup(mut commands: Commands, game_state: ResMut<GameState>, asset_server
         TextBundle::from_section(
             format!("Selected Pattern: {:?}", game_state.selected_pattern),
             TextStyle {
-                font: asset_server.load("fonts/FiraSans-Bold.ttf"), // Replace with the path to your font file
+                font: asset_server.load(config::FONT),
                 font_size: 24.0,
                 color: Color::WHITE,
             },
