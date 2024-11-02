@@ -223,17 +223,17 @@ pub fn change_selected_rules(mut game_state: ResMut<GameState>, keys: Res<Button
     }
 }
 
-pub fn update_text(
+pub fn update_selected_pattern_text(
     game_state: Res<GameState>,
-    mut param_set: ParamSet<(
-        Query<&mut Text, With<SelectedPatternText>>,
-        Query<&mut Text, With<SelectedRulesText>>,
-    )>,
+    mut query: Query<&mut Text, With<SelectedPatternText>>,
 ) {
-    if let Ok(mut text) = param_set.p0().get_single_mut() {
+    if let Ok(mut text) = query.get_single_mut() {
         text.sections[0].value = format!("Selected Pattern: {:?}", game_state.selected_pattern);
     }
-    if let Ok(mut text) = param_set.p1().get_single_mut() {
+}
+
+pub fn update_selected_rules_text(game_state: Res<GameState>, mut query: Query<&mut Text, With<SelectedRulesText>>) {
+    if let Ok(mut text) = query.get_single_mut() {
         text.sections[0].value = format!("Rules: {:?}", game_state.selected_rules);
     }
 }
