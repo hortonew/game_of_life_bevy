@@ -192,6 +192,7 @@ fn render_cells(game_state: Res<GameState>, mut query: Query<&mut Sprite>) {
     }
 }
 
+#[allow(dead_code)]
 enum Pattern {
     Glider,
     Blinker,
@@ -214,7 +215,7 @@ impl Pattern {
     }
 }
 
-fn add_glider(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+fn add_glider(cells: &mut [Vec<Cell>], x: usize, y: usize) {
     // Coordinates for a glider pattern
     let glider_coords = [(0, 1), (1, 2), (2, 0), (2, 1), (2, 2)];
     for (dx, dy) in glider_coords {
@@ -222,7 +223,7 @@ fn add_glider(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
     }
 }
 
-fn add_blinker(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+fn add_blinker(cells: &mut [Vec<Cell>], x: usize, y: usize) {
     // Coordinates for a blinker pattern
     let blinker_coords = [(0, 1), (1, 1), (2, 1)];
     for (dx, dy) in blinker_coords {
@@ -230,21 +231,21 @@ fn add_blinker(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
     }
 }
 
-fn add_toad(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+fn add_toad(cells: &mut [Vec<Cell>], x: usize, y: usize) {
     let toad_coords = [(1, 0), (2, 0), (3, 0), (0, 1), (1, 1), (2, 1)];
     for (dx, dy) in toad_coords {
         cells[y + dy][x + dx].is_alive = true;
     }
 }
 
-fn add_beacon(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+fn add_beacon(cells: &mut [Vec<Cell>], x: usize, y: usize) {
     let beacon_coords = [(0, 0), (1, 0), (0, 1), (1, 1), (2, 2), (3, 2), (2, 3), (3, 3)];
     for (dx, dy) in beacon_coords {
         cells[y + dy][x + dx].is_alive = true;
     }
 }
 
-fn add_pulsar(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+fn add_pulsar(cells: &mut [Vec<Cell>], x: usize, y: usize) {
     let pulsar_coords = [
         (2, 0),
         (3, 0),
@@ -300,7 +301,7 @@ fn add_pulsar(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
     }
 }
 
-fn add_block(cells: &mut Vec<Vec<Cell>>, x: usize, y: usize) {
+fn add_block(cells: &mut [Vec<Cell>], x: usize, y: usize) {
     let block_coords = [(0, 0), (1, 0), (0, 1), (1, 1)];
     for (dx, dy) in block_coords {
         cells[y + dy][x + dx].is_alive = true;
