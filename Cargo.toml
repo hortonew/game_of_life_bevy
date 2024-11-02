@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 bevy = "0.14.2"
+clap = { version = "4.5.20", features = ["derive"] }
 rand = "0.8.5"

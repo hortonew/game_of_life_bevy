@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use clap::{Parser, ValueEnum};
 use rand::Rng;
 
 const GRID_WIDTH: usize = 50;
@@ -7,9 +8,45 @@ const CELL_SIZE: f32 = 10.0;
 const ALIVE_COLOR: Color = Color::srgb(0.0, 1.0, 0.0); // Green for alive cells
 const DEAD_COLOR: Color = Color::srgb(0.0, 0.0, 0.0); // Black for dead cells
 
+#[derive(Parser)]
+struct Args {
+    /// Rule set to use (e.g., conway, highlife, day_and_night, etc.)
+    #[arg(long, value_enum, default_value = "conway")]
+    rules: RuleSet,
+
+    /// Simulation speed in ticks per second
+    #[arg(long, default_value = "30.0")]
+    speed: f64,
+}
+
 struct Rules {
     survival_counts: Vec<usize>, // Counts of neighbors needed to survive
     birth_counts: Vec<usize>,    // Counts of neighbors needed to be born
+}
+
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum)]
+enum RuleSet {
+    Conway,
+    Highlife,
+    DayAndNight,
+    Seeds,
+    LifeWithoutDeath,
+    Maze,
+    Anneal,
+}
+
+impl RuleSet {
+    fn to_rules(self) -> Rules {
+        match self {
+            RuleSet::Conway => Rules::conway(),
+            RuleSet::Highlife => Rules::highlife(),
+            RuleSet::DayAndNight => Rules::day_and_night(),
+            RuleSet::Seeds => Rules::seeds(),
+            RuleSet::LifeWithoutDeath => Rules::life_without_death(),
+            RuleSet::Maze => Rules::maze(),
+            RuleSet::Anneal => Rules::anneal(),
+        }
+    }
 }
 
 impl Rules {
@@ -78,17 +115,21 @@ struct Cell {
 }
 
 fn main() {
+    let args = Args::parse();
+    let rules = args.rules.to_rules();
+    let tick_duration = if args.speed != 1.0 { 1.0 / args.speed } else { 1.0 };
+
     let mut app = App::new();
     app.add_plugins(DefaultPlugins)
         .insert_resource(GameState {
             // cells: generate_random_grid(),
             cells: generate_empty_grid(),
             next_cells: vec![vec![false; GRID_WIDTH]; GRID_HEIGHT],
-            rules: Rules::conway(),
+            rules,
         })
         .add_systems(Startup, setup)
         .add_systems(FixedUpdate, (render_cells, update_cells))
-        .insert_resource(Time::<Fixed>::from_seconds(1.0 / 30.0));
+        .insert_resource(Time::<Fixed>::from_seconds(tick_duration));
 
     // #[cfg(debug_assertions)]
     // {
