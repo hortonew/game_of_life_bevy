@@ -14,18 +14,21 @@ fn main() {
     let args = args::Args::parse();
     let mode = config::Mode::from(args.mode);
     let tick_duration = if args.speed != 1.0 { 1.0 / args.speed } else { 1.0 };
-
+    let game_state = state::GameState {
+        cells: generate_empty_grid(),
+        next_cells: vec![vec![false; config::GRID_WIDTH]; config::GRID_HEIGHT],
+        mode,
+        selected_pattern: patterns::Pattern::Glider,
+        selected_rules: args.rules,
+    };
     App::new()
         .add_plugins((EmbeddedAssetPlugin::default(), DefaultPlugins))
-        .insert_resource(state::GameState {
-            cells: generate_empty_grid(),
-            next_cells: vec![vec![false; config::GRID_WIDTH]; config::GRID_HEIGHT],
-            mode,
-            selected_pattern: patterns::Pattern::Glider,
-            selected_rules: args.rules,
-        })
+        .insert_resource(game_state)
         .add_systems(Startup, systems::setup)
-        .add_systems(FixedUpdate, (systems::render_cells, systems::render_images))
+        .add_systems(
+            FixedUpdate, // lets args.speed control fixed update rate
+            (systems::update_cells, systems::render_cells, systems::render_images),
+        )
         .add_systems(
             Update,
             (
@@ -35,7 +38,6 @@ fn main() {
                 systems::update_selected_pattern_text,
                 systems::update_selected_rules_text,
                 systems::kill_all_cells,
-                systems::update_cells,
             ),
         )
         .insert_resource(Time::<Fixed>::from_seconds(tick_duration))
