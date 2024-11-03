@@ -37,7 +37,7 @@ This project contains flashing lights, rapid screen changes, and other visual ef
 cargo run -- --help
 cargo run -- --speed 1.0 # run 1 frame update per second
 cargo run -- --rules maze --speed 1.0
-cargo run -- --mode image # now it's just a bunch of frogs
+cargo run -- --mode image # now it's just a bunch of crabs (ferris)
 ```
 
 Example: Conway's GOL
