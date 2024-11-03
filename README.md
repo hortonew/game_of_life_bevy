@@ -4,6 +4,8 @@ This project aims to implement the Game of Life in Bevy.  As I approached this I
 
 It's mostly used for me to expand my Bevy knowledge so if any of the rules or patterns are incorrect, please let me know and I'll attempt to correct them.
 
+Play with it on [erikhorton.itch.io](https://erikhorton.itch.io/bevy-game-of-life-example)
+
 ## ⚠️ Epilepsy Warning ⚠️
 
 This project contains flashing lights, rapid screen changes, and other visual effects that may trigger seizures for people with photosensitive epilepsy. 
@@ -71,4 +73,16 @@ src/
     systems.rs - systems that run on a schedule to produce the game
 Cargo.toml - dependencies and optimizations
 rustfmt.toml - formatting for linter
+```
+
+## Release
+
+```sh
+rustup target add wasm32-unknown-unknown
+cargo install -f wasm-bindgen-cli
+cargo build --release --target wasm32-unknown-unknown
+wasm-bindgen --out-dir ./webbuild/out/ --target web ./target/wasm32-unknown-unknown/release/game_of_life_bevy.wasm
+cp -r assets ./webbuild/
+# test: npx serve webbuild
+zip -r webbuild.zip webbuild
 ```
