@@ -3,6 +3,7 @@ use crate::state::{Cell, SelectedPatternText, SelectedRulesText, Textures};
 use crate::{config, state::GameState};
 use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
+use rayon::prelude::*;
 
 pub fn setup(mut commands: Commands, game_state: ResMut<GameState>, asset_server: Res<AssetServer>) {
     // Spawn the 2D camera
@@ -98,9 +99,9 @@ pub fn update_cells(mut game_state: ResMut<GameState>) {
     // Temporary storage for the next state to avoid mutable borrowing conflicts
     let mut new_next_cells = vec![vec![false; config::GRID_WIDTH]; config::GRID_HEIGHT];
 
-    // First pass: determine the next state for each cell
-    for (y, row) in new_next_cells.iter_mut().enumerate() {
-        for (x, cell) in row.iter_mut().enumerate() {
+    // First pass: determine the next state for each cell in parallel
+    new_next_cells.par_iter_mut().enumerate().for_each(|(y, row)| {
+        row.iter_mut().enumerate().for_each(|(x, cell)| {
             let alive_neighbors = count_alive_neighbors(&game_state.cells, x, y);
             let is_alive = game_state.cells[y][x].is_alive;
 
@@ -109,28 +110,29 @@ pub fn update_cells(mut game_state: ResMut<GameState>) {
             } else {
                 rules.birth_counts.contains(&alive_neighbors)
             };
-        }
-    }
+        });
+    });
 
     // Second pass: update game_state.next_cells with the calculated next state
     game_state.next_cells = new_next_cells;
 
-    // Third pass: apply the next state and update activation counts
-    for y in 0..config::GRID_HEIGHT {
-        for x in 0..config::GRID_WIDTH {
-            let next_alive = game_state.next_cells[y][x];
-            let cell = &mut game_state.cells[y][x];
+    // Third pass: apply the next state and update activation counts in parallel
+    let next_cells = game_state.next_cells.clone();
+    game_state.cells.par_iter_mut().enumerate().for_each(|(y, row)| {
+        row.iter_mut().enumerate().for_each(|(x, cell)| {
+            let next_alive = next_cells[y][x];
             if next_alive && !cell.is_alive {
                 cell.activation_count += 1; // Increment count if cell becomes alive
             }
             cell.is_alive = next_alive;
-        }
-    }
+        });
+    });
 }
 
 pub fn render_cells(game_state: Res<GameState>, mut query: Query<&mut Sprite>) {
     if game_state.mode == Mode::Color {
-        for (i, mut sprite) in query.iter_mut().enumerate() {
+        let mut sprites: Vec<_> = query.iter_mut().collect();
+        sprites.par_iter_mut().enumerate().for_each(|(i, sprite)| {
             let x = i % config::GRID_WIDTH;
             let y = i / config::GRID_WIDTH;
             sprite.color = if game_state.cells[y][x].is_alive {
@@ -138,7 +140,7 @@ pub fn render_cells(game_state: Res<GameState>, mut query: Query<&mut Sprite>) {
             } else {
                 config::DEAD_COLOR
             };
-        }
+        });
     }
 }
 

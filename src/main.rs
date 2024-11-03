@@ -25,10 +25,7 @@ fn main() {
             selected_rules: args.rules,
         })
         .add_systems(Startup, systems::setup)
-        .add_systems(
-            FixedUpdate,
-            (systems::render_cells, systems::render_images, systems::update_cells),
-        )
+        .add_systems(FixedUpdate, (systems::render_cells, systems::render_images))
         .add_systems(
             Update,
             (
@@ -38,6 +35,7 @@ fn main() {
                 systems::update_selected_pattern_text,
                 systems::update_selected_rules_text,
                 systems::kill_all_cells,
+                systems::update_cells,
             ),
         )
         .insert_resource(Time::<Fixed>::from_seconds(tick_duration))
