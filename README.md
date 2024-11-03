@@ -44,6 +44,9 @@ Example: Conway's GOL
 Example: Maze
 ![Maze](images/maze.png)
 
+Example: Run
+![GOL](images/gol.gif)
+
 ## Usage
 
 When it starts, the screen will only be dead cells.  Click to add a new pattern to the mix.
